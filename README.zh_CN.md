@@ -4,7 +4,7 @@ Language: [English](README.md)
 
 ---
 
-解决打开在Edge中打开PDF时无法跳转至上次阅读位置的问题。
+解决在Edge中打开PDF时无法跳转至上次阅读位置的问题。
 
 ## 概述
 
