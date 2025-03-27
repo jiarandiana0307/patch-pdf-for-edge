@@ -22,30 +22,20 @@ If a PDF document defines `OpenAction` attribute, the attribute will override th
 
 So, in order to solve the problem, what we have to do is to modify and remove the `OpenAction` attribute defined in the PDF that failed to be opened at the last position, which is exactly what this repository does.
 
-## Prerequisites
-
-- Python 3
-
-- Edge version >= 95
-
 ## Usage
 
-1\. Download this project then enter into the project directory
+There are two implementations in this repository, which are in Python and JavaScript.
 
-2\. Install necessary python package
+The Python implementation requires local Python development environment, which is suitable for processing PDF documents wholesale. Read the [README][python-readme] documentation under the python directory for more details.
 
-```bash
-pip3 install -r requirements.txt
-```
+The JavaScript implementation is merely a single HTML file which can be used on web browsers directly. What you have to do to deploy is to host the HTML files on your server.
 
-3\. Place the PDF that can't be opened at the last position into the project directory
-
-4\. Run the script
-
-```bash
-python patch_pdf_for_edge.py
-```
-
-Wait for the script to finish executing.
+There is an online demo of JavaScript implementation: [https://patchpdf.netlify.app/en.html][javascript-online-demo]
 
 [pick-up-where-you-left-off]: https://techcommunity.microsoft.com/discussions/edgeinsiderannouncements/pick-up-where-you-left-off-on-microsoft-edge-pdf-reader/2771351
+
+[python-readme]: python/README.md
+
+[javascript-readme]: javascript/README.md
+
+[javascript-online-demo]: https://patchpdf.netlify.app/en.html

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>PDF补丁</title>
+    <meta name="description" content="通过删除PDF文档中的OpenAction属性，以解决Edge浏览器打开PDF时无法定位至上次阅读位置的问题。">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
+  </head>
+  <body>
+    <div style="margin:2%;">
+      <h2 id="header">给PDF打补丁</h2>
+      <p>Language(语言): <a href="en.html">English(英语)</a></p>
+      <p id="subtitle">通过删除PDF文档中的OpenAction属性，以解决Edge浏览器打开PDF时无法定位至上次阅读位置的问题。</p>
+      <p><span id="add-file">添加文件：</span><input id="pdf-file" type="file" accept=".pdf" multiple></p>
+      <p>输出日志信息：<button onclick="clearLog()" style="margin-left: 20px;">清空日志</button></p>
+      <div id="output-msg"></div>
+      <div id="footer" style="margin: 200px;"></div>
+    </div>
+
+    <script>
+      const input = document.getElementById('pdf-file')
+      const messageContainer = document.getElementById('output-msg')
+      const MessageType = Object.freeze({
+        LoadFile: Symbol('LoadFile'),
+        FailedToLoadFile: Symbol('FailedToLoadFile'),
+        Modified: Symbol('Modified'),
+        NoNeedToModify: Symbol('NoNeedToModify'),
+        InvalidPDFFile: Symbol('InvalidPDFFile')
+      })
+      const Strings = Object.freeze({
+          LoadFile: '成功添加文件',
+          FailedToLoadFile: '无法读取文件',
+          Processing: '正在处理文件',
+          Modified: '成功修改文件，保存为',
+          NoNeedToModify: '无需修改文件',
+          InvalidPDFFile: '损坏的文件或文件格式错误'
+      })
+
+      class InvalidPDFFile extends Error {
+        constructor(message) {
+          super(message)
+          this.name = 'InvalidPDFFile'
+        }
+      }
+
+      async function loadPDFDoc(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader()
+
+          reader.onload = async (event) => {
+            const pdfBytes = event.target.result
+            try {
+              const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes)
+              resolve(pdfDoc)
+            } catch (error) {
+              reject(new InvalidPDFFile(error.message))
+            }
+          }
+
+          reader.onerror = (error) => {
+            reject(error)
+          }
+
+          reader.readAsArrayBuffer(file)
+        })
+      }
+
+      async function savePDFDoc(pdfDoc, outputFilename) {
+        const pdfBytes = await pdfDoc.save()
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' })
+        const link = document.createElement('a')
+        link.href = window.URL.createObjectURL(blob)
+        link.download = outputFilename
+        link.click()
+      }
+
+      function removeOpenActionPropertyFromPDF(pdfDoc) {
+        const catalogDict = pdfDoc.catalog.dict
+        let openActionKey
+        catalogDict.keys().forEach(key=>{
+          if (key.encodedName == '/OpenAction') {
+            openActionKey = key
+          }
+        })
+
+        if (!catalogDict.has(openActionKey)) {
+          return false
+        }
+
+        catalogDict.delete(openActionKey)
+        return true
+      }
+
+      function getDatetimeString(datetime) {
+        const year = datetime.getFullYear()
+        const month = datetime.getMonth() + 1
+        const day = datetime.getDate()
+        const hour = datetime.getHours()
+        const minute = datetime.getMinutes()
+        const second = datetime.getSeconds()
+
+        function pad(n) {
+          return n.toString().padStart(2, '0')
+        }
+        return `${year}-${pad(month)}-${pad(day)} ${pad(hour)}:${pad(minute)}:${pad(second)}`
+      }
+
+      function printMessage(params, messageType) {
+        const now = new Date()
+        let messageHtml = `<p>${getDatetimeString(now)}&nbsp;&nbsp;&nbsp;&nbsp;`
+        switch (messageType) {
+        case MessageType.LoadFile:
+          messageHtml += `<span style="color:gray;">${Strings.LoadFile+'，'+Strings.Processing}</span>: <span style="color:green;">${params.file.name}</span>`
+          break
+        case MessageType.Modified:
+          messageHtml += `<span style="color:blue;">${Strings.Modified}</span>: <span style="color:green;">${params.outputFilename}</span>`
+          break
+        case MessageType.NoNeedToModify:
+          messageHtml += `<span style="color:brown;">${Strings.NoNeedToModify}</span>: <span style="color:green;">${params.file.name}</span>`
+          break
+        case MessageType.InvalidPDFFile:
+          messageHtml += `<span style="color:red;">${Strings.InvalidPDFFile}</span>: <span style="color:green;">${params.file.name}</span>`
+          break
+        }
+        messageHtml += '</p>'
+        messageContainer.innerHTML += messageHtml
+      }
+
+      function clearLog() {
+        messageContainer.innerHTML = ''
+      }
+
+      input.onchange = async (event)=>{
+        const files = event.target.files
+        for (let i = 0; i < files.length; ++i) {
+          const file = files[i]
+          printMessage({ file: file }, MessageType.LoadFile)
+          try {
+            const pdfDoc = await loadPDFDoc(file)
+            let result = removeOpenActionPropertyFromPDF(pdfDoc)
+            if (!result) {
+              printMessage({ file: file }, MessageType.NoNeedToModify)
+              continue
+            }
+            const outputFilename = 'patched_' + file.name
+            savePDFDoc(pdfDoc, outputFilename)
+            printMessage({ file: file, outputFilename: outputFilename }, MessageType.Modified)
+          } catch (error) {
+            switch (error.name) {
+            case 'NotFoundError':
+              printMessage({ file: file }, MessageType.FailedToLoadFile)
+              break
+            case 'InvalidPDFFile':
+              printMessage({ file: file }, MessageType.InvalidPDFFile)
+              break
+            }
+          }
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -22,30 +22,18 @@ Language: [English](README.md)
 
 所以，只需要修改一下PDF文档，将无法自动跳转的PDF文档中的OpenAction属性删除，这个问题就能迎刃而解。
 
-## 前提条件
-
-- Python 3
-
-- Edge版本>=95
-
 ## 使用方法
 
-1\. 下载本项目并进入项目目录
+本项目提供了Python和JavaScript两种实现：
 
-2\. 下载必要的Python包
+Python实现需要在本地搭建Python环境运行，适合批量处理PDF的场景，详见python目录下的[README][python-readme-zh]文档。
 
-```bash
-pip3 install -r requirements.txt
-```
+JavaScript实现是一个单独的HTML文件，用浏览器打开就能直接使用，只需将javascript目录下的HTML文件托管到服务器上即可部署。
 
-3\. 将无法跳转至上次浏览位置的PDF文件放到项目目录
-
-4\. 运行脚本
-
-```bash
-python patch_pdf_for_edge.pdf
-```
-
-等待脚本执行结束。
+JavaScript实现的一个在线示例：[https://patchpdf.netlify.app][javascript-online-demo]
 
 [pick-up-where-you-left-off]: https://techcommunity.microsoft.com/discussions/edgeinsiderannouncements/pick-up-where-you-left-off-on-microsoft-edge-pdf-reader/2771351
+
+[python-readme-zh]: python/README.zh_CN.md
+
+[javascript-online-demo]: https://patchpdf.netlify.app
