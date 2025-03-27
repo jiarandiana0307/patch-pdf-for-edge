@@ -6,16 +6,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/pdf-lib/dist/pdf-lib.min.js"></script>
+    <style type="text/css">
+      * {
+        margin: 0;
+        padding: 0;
+      }
+
+      #language, #subtitle, #add-file-line, #output-prompt {
+        margin-top: 15px;
+      }
+
+      #output-msg {
+        margin-top: 10px;
+        overflow-y: scroll;
+        height: calc(70vh - 100px);
+      }
+
+      #footer {
+        margin: 40px;
+        text-align: center;
+      }
+
+      .filename {
+        color: green;
+      }
+    </style>
   </head>
   <body>
     <div style="margin:2%;">
       <h2 id="header">Patch PDF</h2>
-      <p>Language(语言): <a href="index.html">Chinese(中文)</a></p>
+      <p id="language">Language(语言): <a href="index.html">Chinese(中文)</a></p>
       <p id="subtitle">Solve the problem of failing to open a PDF in Edge at the last position where you stopped reading by removing the OpenAction property in PDF.</p>
-      <p><span id="add-file">Add files: </span><input id="pdf-file" type="file" accept=".pdf" multiple></p>
-      <p>Logging Output: <button onclick="clearLog()" style="margin-left: 20px;">Clear Logging</button></p>
+      <p id="add-file-line"><span id="add-file">Add files: </span><input id="pdf-file" type="file" accept=".pdf" multiple></p>
+      <p id="output-prompt">Logging Output: <button onclick="clearLog()" style="margin-left: 20px;">Clear Logging</button></p>
       <div id="output-msg"></div>
-      <div id="footer" style="margin: 200px 20px; text-align: center;">
+      <div id="footer">
         <p>Open source: <a href="https://github.com/jiarandiana0307/patch-pdf-for-edge">jiarandiana0307/patch-pdf-for-edge</a></p>
       </div>
     </div>
@@ -113,20 +138,21 @@
         let messageHtml = `<p>${getDatetimeString(now)}&nbsp;&nbsp;&nbsp;&nbsp;`
         switch (messageType) {
         case MessageType.LoadFile:
-          messageHtml += `<span style="color:gray;">${Strings.LoadFile+'. '+Strings.Processing}</span>: <span style="color:green;">${params.file.name}</span>`
+          messageHtml += `<span style="color:gray;">${Strings.LoadFile+'. '+Strings.Processing}</span>: <span class="filename">${params.file.name}</span>`
           break
         case MessageType.Modified:
-          messageHtml += `<span style="color:blue;">${Strings.Modified}</span>: <span style="color:green;">${params.outputFilename}</span>`
+          messageHtml += `<span style="color:blue;">${Strings.Modified}</span>: <span class="filename">${params.outputFilename}</span>`
           break
         case MessageType.NoNeedToModify:
-          messageHtml += `<span style="color:brown;">${Strings.NoNeedToModify}</span>: <span style="color:green;">${params.file.name}</span>`
+          messageHtml += `<span style="color:brown;">${Strings.NoNeedToModify}</span>: <span class="filename">${params.file.name}</span>`
           break
         case MessageType.InvalidPDFFile:
-          messageHtml += `<span style="color:red;">${Strings.InvalidPDFFile}</span>: <span style="color:green;">${params.file.name}</span>`
+          messageHtml += `<span style="color:red;">${Strings.InvalidPDFFile}</span>: <span class="filename">${params.file.name}</span>`
           break
         }
         messageHtml += '</p>'
         messageContainer.innerHTML += messageHtml
+        messageContainer.scrollTo({ top: messageContainer.scrollHeight, left: 0, behavior: 'smooth' })
       }
 
       function clearLog() {
