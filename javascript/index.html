@@ -53,7 +53,8 @@
         FailedToLoadFile: Symbol('FailedToLoadFile'),
         Modified: Symbol('Modified'),
         NoNeedToModify: Symbol('NoNeedToModify'),
-        InvalidPDFFile: Symbol('InvalidPDFFile')
+        InvalidPDFFile: Symbol('InvalidPDFFile'),
+        EncryptedFile: Symbol('EncryptedFile')
       })
       const Strings = Object.freeze({
           LoadFile: '成功添加文件',
@@ -61,13 +62,21 @@
           Processing: '正在处理文件',
           Modified: '成功修改文件，保存为',
           NoNeedToModify: '无需修改文件',
-          InvalidPDFFile: '损坏的文件或文件格式错误'
+          InvalidPDFFile: '损坏的文件或文件格式错误',
+          EncryptedFile: '无法修改文件，文件已加密'
       })
 
       class InvalidPDFFile extends Error {
         constructor(message) {
           super(message)
           this.name = 'InvalidPDFFile'
+        }
+      }
+
+      class EncryptedFile extends Error {
+        constructor(message) {
+          super(message)
+          this.name = 'EncryptedFile'
         }
       }
 
@@ -78,7 +87,10 @@
           reader.onload = async (event) => {
             const pdfBytes = event.target.result
             try {
-              const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes)
+              const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes, { ignoreEncryption: true })
+              if (pdfDoc.isEncrypted) {
+                reject(new EncryptedFile())
+              }
               resolve(pdfDoc)
             } catch (error) {
               reject(new InvalidPDFFile(error.message))
@@ -149,6 +161,9 @@
         case MessageType.InvalidPDFFile:
           messageHtml += `<span style="color:red;">${Strings.InvalidPDFFile}</span>: <span class="filename">${params.file.name}</span>`
           break
+        case MessageType.EncryptedFile:
+          messageHtml += `<span style="color:red;">${Strings.EncryptedFile}</span>: <span class="filename">${params.file.name}</span>`
+          break
         }
         messageHtml += '</p>'
         messageContainer.innerHTML += messageHtml
@@ -181,6 +196,9 @@
               break
             case 'InvalidPDFFile':
               printMessage({ file: file }, MessageType.InvalidPDFFile)
+              break
+            case 'EncryptedFile':
+              printMessage({ file: file }, MessageType.EncryptedFile)
               break
             }
           }
